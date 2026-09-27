@@ -10,12 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      # Pinned donor: mcc0nnell/accessibility-agents @ 161c60c7493ad657f371ad8f91253d33c3b12044
-      - name: WCAG 2.2 AA static scan
-        uses: mcc0nnell/accessibility-agents/action@161c60c7493ad657f371ad8f91253d33c3b12044
+      - uses: actions/setup-node@v4
         with:
-          scan-type: web
-          profile: moderate
-          fail-on: serious
-          paths: .
-          upload-sarif: true
+          node-version: 22
+      - name: WCAG 2.2 AA static scan
+        env:
+          INPUT_SCAN_TYPE: web
+          INPUT_PROFILE: moderate
+          INPUT_FAIL_ON: serious
+          INPUT_PATHS: .
+          INPUT_SARIF_FILE: a11y-results.sarif
+        run: node tools/accessibility-scan.mjs
+      - name: Upload accessibility SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: a11y-results.sarif
+          category: accessibility
+        continue-on-error: true

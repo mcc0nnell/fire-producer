@@ -2,7 +2,7 @@
 
 Fire Producer treats accessibility as runtime infrastructure, not a presentation option.
 
-This policy is derived from the project's donor repository, [`mcc0nnell/accessibility-agents`](https://github.com/mcc0nnell/accessibility-agents), specifically its media-accessibility, live-region-controller, keyboard-navigator, contrast-master, ARIA, and data-visualization specialists. CI also runs that repository's web accessibility scanner pinned to a reviewed commit.
+This policy is derived from the project's donor repository, [`mcc0nnell/accessibility-agents`](https://github.com/mcc0nnell/accessibility-agents), specifically its media-accessibility, live-region-controller, keyboard-navigator, contrast-master, ARIA, and data-visualization specialists. CI vendors that repository's web accessibility scanner from a reviewed commit, with the donor SHA and MIT license recorded under `third_party/accessibility-agents/`.
 
 ## Runtime rules
 
@@ -17,6 +17,6 @@ This policy is derived from the project's donor repository, [`mcc0nnell/accessib
 
 ## CI
 
-`.github/workflows/accessibility.yml` runs the Accessibility Agents web scanner against the repository and fails on serious violations. The source is pinned by commit SHA so scanner behavior cannot change silently.
+`.github/workflows/accessibility.yml` runs the vendored Accessibility Agents web scanner against the repository and fails on serious violations. The scanner was imported from donor commit `161c60c7493ad657f371ad8f91253d33c3b12044`, so behavior cannot change silently when the donor repository moves.
 
 The scanner supplements, but does not replace, keyboard and screen-reader testing of the deployed production surfaces.
