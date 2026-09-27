@@ -6,6 +6,9 @@ Fire Producer is an event-sourced live production and interactive streaming syst
 
 The first vertical slice is football.
 
+**Live demo:** https://fire-producer.stokoe.workers.dev/?mode=viewer&game=demo  
+**Operator:** https://fire-producer.stokoe.workers.dev/?mode=operator&game=demo
+
 ## What works in v0.1
 
 - authoritative per-game `GameDO` on Cloudflare Durable Objects;
