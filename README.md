@@ -9,7 +9,7 @@ The first vertical slice is football.
 **Live demo:** https://fire-producer.stokoe.workers.dev/?mode=viewer&game=demo  
 **Operator:** https://fire-producer.stokoe.workers.dev/?mode=operator&game=demo
 
-## What works in v0.2
+## What works in v0.3
 
 - authoritative per-game `GameDO` on Cloudflare Durable Objects;
 - SQLite-backed append-only event journal;
@@ -21,6 +21,8 @@ The first vertical slice is football.
 - broadcast-grade viewer and producer surfaces from one Vite build;
 - HLS program-feed input via `?stream=<m3u8-url>` with native playback or hls.js fallback;
 - Fire TV remote-friendly Game Center (`ArrowUp` opens/closes it);
+- lazy-loaded Apache ECharts Drive Map reconstructed from field-position events;
+- lazy-loaded ECharts scoring timeline reconstructed from the durable game log;
 - animated scoring / possession stings and resilient scorebug/caption overlays;
 - deterministic reducer tests.
 
@@ -49,7 +51,7 @@ Without `?stream=`, the viewer uses a synthetic football program feed for an imm
 
 ## Storage
 
-`GameDO` uses Durable Object SQLite for the live event journal. Neon/Postgres is an optional archive/analytics plane, not the scoreboard lock. See `docs/ARCHITECTURE.md`.
+`GameDO` uses Durable Object SQLite for the live event journal. Game Center analytics replay that same journal; charts never become a second source of game truth. Neon/Postgres is an optional archive/analytics plane, not the scoreboard lock. See `docs/ARCHITECTURE.md`.
 
 ## Lineage
 

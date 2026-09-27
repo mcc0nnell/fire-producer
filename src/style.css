@@ -172,3 +172,14 @@ button.primary { border-color: #ff6a27; background: linear-gradient(#ff6b24,#dd4
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+/* Game Center analytics: loaded visually with ECharts only when the drawer opens. */
+.game-center { overflow-y: auto; padding-bottom: 78px; }
+.analytics-card { margin-top: 14px; border: 1px solid #2c3139; border-radius: 10px; overflow: hidden; background: linear-gradient(180deg,#10141a,#090b0f); box-shadow: inset 0 1px #ffffff08; }
+.analytics-head { display: flex; align-items: start; justify-content: space-between; padding: 12px 13px 0; }
+.analytics-head small { color: #68717d; font-size: 8px; font-weight: 950; letter-spacing: .16em; }
+.analytics-head h3 { margin: 2px 0 0; color: #f5f7fa; font-size: 15px; letter-spacing: -.02em; }
+.analytics-head > span { margin-top: 2px; border: 1px solid #ff6a2447; border-radius: 999px; padding: 3px 6px; color: #ff8a4b; font-size: 7px; font-weight: 950; letter-spacing: .12em; }
+.field-chart { height: 154px; margin: 2px 8px 4px; }
+.score-chart { height: 150px; margin: 0 8px 5px; }
+.drive-heading { margin-top: 22px; }

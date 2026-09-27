@@ -11,6 +11,7 @@ let state: GameState | null = null
 let drawerOpen = false
 let connected = false
 let stingTimer: number | undefined
+let gameCenterModule: typeof import('./game-center') | null = null
 
 const id = () => crypto.randomUUID()
 const api = (action: string) => `/api/games/${encodeURIComponent(slug)}/${action}`
@@ -129,7 +130,9 @@ function viewerPanel() {
   return `<aside class="game-center" data-drawer aria-hidden="true">
     <div class="drawer-head"><div><small>FIRE PRODUCER</small><h2>Game Center</h2></div><button data-action="drawer" aria-label="Close game center">×</button></div>
     <div class="viewer-facts"><div><small>QUARTER</small><b data-drawer-quarter></b></div><div><small>DOWN</small><b data-drawer-down></b></div><div><small>BALL ON</small><b data-drawer-ball></b></div></div>
-    <h3>CURRENT DRIVE</h3><div class="drive" data-drive></div>
+    <section class="analytics-card field-card"><div class="analytics-head"><div><small>LIVE POSITION</small><h3>Drive map</h3></div><span>ECHARTS</span></div><div class="field-chart" data-field-chart role="img" aria-label="Current drive field position"></div></section>
+    <section class="analytics-card score-card"><div class="analytics-head"><div><small>GAME FLOW</small><h3>Scoring timeline</h3></div><span>LIVE</span></div><div class="score-chart" data-score-chart role="img" aria-label="Scoring timeline"></div></section>
+    <h3 class="drive-heading">CURRENT DRIVE</h3><div class="drive" data-drive></div>
     <div class="remote-help"><span>▲</span> Open / close with Fire TV remote</div>
   </aside>`
 }
@@ -184,6 +187,7 @@ function update(s: GameState, previous?: GameState | null) {
     : '<p class="empty-drive">Waiting for the first snap.</p>'
 
   if (previous) detectSting(previous, s)
+  if (drawerOpen) void ensureGameCenter()
   refreshClock()
 }
 
@@ -204,12 +208,20 @@ function showSting(kicker: string, title: string, sub: string) {
 
 function ordinal(n: number) { return n === 1 ? '1ST' : n === 2 ? '2ND' : n === 3 ? '3RD' : `${n}TH` }
 
+async function ensureGameCenter() {
+  if (mode !== 'viewer' || !state) return
+  gameCenterModule ??= await import('./game-center')
+  await gameCenterModule.renderGameCenter(state, api('events'))
+  window.setTimeout(() => gameCenterModule?.resizeGameCenter(), 360)
+}
+
 function toggleDrawer(force?: boolean) {
   drawerOpen = force ?? !drawerOpen
   const drawer = document.querySelector<HTMLElement>('[data-drawer]')
   drawer?.classList.toggle('open', drawerOpen)
   drawer?.setAttribute('aria-hidden', String(!drawerOpen))
   document.querySelectorAll<HTMLElement>('[data-action="drawer"]').forEach((el) => el.setAttribute('aria-expanded', String(drawerOpen)))
+  if (drawerOpen) void ensureGameCenter()
 }
 
 function bind() {
