@@ -35,3 +35,25 @@ describe('event cartridges', () => {
     expect(initialWeatherState()).toEqual(weatherCartridge.initialState())
   })
 })
+
+import {captionsCartridge, type CaptionCommand} from '../src/cartridges/captions'
+
+describe('live captions cartridge', () => {
+  it('replaces partial text and commits final cues to history', () => {
+    const state=captionsCartridge.fold([
+      ev<CaptionCommand>(1,{type:'SET_PARTIAL',speaker:'Announcer',text:'Third and',idempotencyKey:'c1'}),
+      ev<CaptionCommand>(2,{type:'SET_PARTIAL',speaker:'Announcer',text:'Third and six',idempotencyKey:'c2'}),
+      ev<CaptionCommand>(3,{type:'COMMIT',speaker:'Announcer',text:'Third and six from the 42.',idempotencyKey:'c3'}),
+    ])
+    expect(state.current).toMatchObject({speaker:'Announcer',text:'Third and six from the 42.',final:true})
+    expect(state.history).toHaveLength(1)
+    expect(state.history[0].seq).toBe(3)
+  })
+
+  it('retains at most 100 committed cues', () => {
+    const events=Array.from({length:105},(_,i)=>ev<CaptionCommand>(i+1,{type:'COMMIT',text:`Cue ${i+1}`,idempotencyKey:`cap-${i+1}`}))
+    const state=captionsCartridge.fold(events)
+    expect(state.history).toHaveLength(100)
+    expect(state.history[0].text).toBe('Cue 6')
+  })
+})

@@ -36,6 +36,11 @@ Executable core semantics now exist for story selection, lower thirds, breaking-
 
 Executable core semantics now exist for location, current conditions, forecast periods, alerts, and captions. Weather data ingestion is deliberately separate from the cartridge reducer so providers can be swapped without changing production semantics.
 
+
+### Live Captions
+
+A provider-neutral live caption authority with incremental partial text, committed cues, speaker labels, language metadata, pause/resume state, and bounded transcript history. It is designed to mount beside any other cartridge rather than being coupled to a sport or show format.
+
 ## Composition
 
 The runtime now demonstrates multiple cartridges contributing to one program through the composite production surface. A football show can mount weather and news capabilities; an emergency alert cartridge can claim a higher-priority surface than a scorebug or ticker.
@@ -55,4 +60,4 @@ Cartridges must remain deterministic. External feeds become explicit input event
 
 ## Surface arbitration
 
-The first composition policy is explicit and deterministic: Weather alert priority 100, News breaking priority 80, Football scorebug priority 50. The composite viewer subscribes to all mounted authorities and projects the highest-priority active override while retaining lower-priority persistent surfaces such as the scorebug, weather bug, lower third, and ticker.
+The first composition policy is explicit and deterministic: Weather alert priority 100, News breaking priority 80, Football scorebug priority 50. Captions are persistent accessibility output and remain projected independently of that override ordering. The composite viewer subscribes to all mounted authorities and projects the highest-priority active override while retaining lower-priority persistent surfaces such as the scorebug, weather bug, lower third, and ticker.

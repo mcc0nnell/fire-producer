@@ -13,11 +13,13 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 **News producer:** https://fire-producer.stokoe.workers.dev/?cartridge=news&event=evening&mode=operator  
 **Weather:** https://fire-producer.stokoe.workers.dev/?cartridge=weather&event=baltimore&mode=viewer  
 **Weather producer:** https://fire-producer.stokoe.workers.dev/?cartridge=weather&event=baltimore&mode=operator  
-**Composite program:** https://fire-producer.stokoe.workers.dev/?composite=friday-night
+**Composite program:** https://fire-producer.stokoe.workers.dev/?composite=friday-night  
+**Live captions:** https://fire-producer.stokoe.workers.dev/?cartridge=captions&event=main&mode=viewer  
+**Captioner:** https://fire-producer.stokoe.workers.dev/?cartridge=captions&event=main&mode=operator
 
-## What works in v0.7
+## What works in v0.8
 
-- authoritative per-game `GameDO` on Cloudflare Durable Objects;
+- authoritative per-production `EventDO` on Cloudflare Durable Objects;
 - SQLite-backed append-only event journal;
 - idempotent operator commands;
 - WebSocket fan-out to independent viewer surfaces;
@@ -39,13 +41,16 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 - live News viewer/producer surface driven by the News cartridge;
 - live Weather viewer/producer surface driven by the Weather cartridge;
 - composite production surface mounting Football + News + Weather simultaneously;
-- deterministic surface priority: weather alert > breaking news > normal program graphics.
+- deterministic surface priority: weather alert > breaking news > normal program graphics;
+- first-class Live Captions cartridge with partial/final cues, speaker labels, pause state, and transcript history;
+- composite program mounts captions as a persistent fourth authority;
+- provider-neutral caption ingest through the generic command API.
 
 ```text
-operator -> GameDO -> SQLite event log
-               |\
-               | +--> viewer / Fire TV
-               +----> scorebug / captions / stats
+operator/provider -> EventDO -> SQLite event log
+                       |\
+                       | +--> viewers / program outputs
+                       +----> graphics / captions / analytics
 ```
 
 ## Run
@@ -66,11 +71,11 @@ Without `?stream=`, the viewer uses a synthetic football program feed for an imm
 
 ## Event cartridges
 
-See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md) and [`docs/API.md`](docs/API.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
+See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md), [`docs/API.md`](docs/API.md), and [`docs/CAPTIONS.md`](docs/CAPTIONS.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
 ## Storage
 
-`GameDO` uses Durable Object SQLite for the live event journal. Game Center analytics replay that same journal; charts never become a second source of game truth. Neon/Postgres is an optional archive/analytics plane, not the scoreboard lock. See `docs/ARCHITECTURE.md`.
+`EventDO` uses Durable Object SQLite for each cartridge production authority. Game Center analytics replay that same journal; charts never become a second source of game truth. Neon/Postgres is an optional archive/analytics plane, not the scoreboard lock. See `docs/ARCHITECTURE.md`.
 
 ## Lineage
 

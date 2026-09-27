@@ -298,7 +298,9 @@ document.addEventListener('keydown', (event) => {
 })
 
 if (composite) {
-  import('./composite-production').then(({startCompositeProduction}) => startCompositeProduction(root, slug, params.get('news') || 'evening', params.get('weather') || 'baltimore'))
+  import('./composite-production').then(({startCompositeProduction}) => startCompositeProduction(root, slug, params.get('news') || 'evening', params.get('weather') || 'baltimore', params.get('captions') || 'main'))
+} else if (cartridgeId === 'captions') {
+  import('./caption-production').then(({startCaptionProduction}) => startCaptionProduction(root, productionSlug, mode))
 } else if (cartridgeId === 'news' || cartridgeId === 'weather') {
   import('./cartridge-production').then(({startCartridgeProduction}) => startCartridgeProduction({root,cartridgeId,slug:productionSlug,mode}))
 } else {
