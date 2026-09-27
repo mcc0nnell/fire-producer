@@ -11,6 +11,7 @@ echarts.use([LineChart, AriaComponent, GridComponent, TooltipComponent, CanvasRe
 let fieldChart: EChartsType | null = null
 let scoreChart: EChartsType | null = null
 let lastRevision = -1
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 function fieldOption(state: GameState, points: GameStoryPoint[]): echarts.EChartsCoreOption {
   const currentDrive = Math.max(...points.map((point) => point.drive))
@@ -18,7 +19,7 @@ function fieldOption(state: GameState, points: GameStoryPoint[]): echarts.EChart
   const data = (drivePoints.length ? drivePoints : points).map((point) => [point.ballOn, .5, point.label, point.seq])
 
   return {
-    animationDuration: 650,
+    animationDuration: reduceMotion ? 0 : 650,
     animationEasing: 'cubicOut',
     backgroundColor: 'transparent',
     aria: {enabled: true, decal: {show: false}},
@@ -58,7 +59,7 @@ function scoreOption(state: GameState, points: GameStoryPoint[]): echarts.EChart
   const scoring = points.filter((point, index) => index === 0 || point.homeScore !== points[index - 1].homeScore || point.awayScore !== points[index - 1].awayScore)
   const categories = scoring.map((point) => point.seq === 0 ? 'START' : `#${point.seq}`)
   return {
-    animationDuration: 700,
+    animationDuration: reduceMotion ? 0 : 700,
     animationEasing: 'cubicOut',
     backgroundColor: 'transparent',
     aria: {enabled: true, decal: {show: false}},
@@ -82,7 +83,24 @@ export async function renderGameCenter(state: GameState, eventsUrl: string) {
 
   const fieldEl = document.querySelector<HTMLElement>('[data-field-chart]')
   const scoreEl = document.querySelector<HTMLElement>('[data-score-chart]')
+  const fieldSummaryEl = document.querySelector<HTMLElement>('[data-field-summary]')
+  const scoreSummaryEl = document.querySelector<HTMLElement>('[data-score-summary]')
+  const dataEl = document.querySelector<HTMLElement>('[data-chart-data]')
   if (!fieldEl || !scoreEl) return
+
+  const currentDrive=Math.max(...points.map((point)=>point.drive))
+  const drivePoints=points.filter((point)=>point.drive===currentDrive)
+  const latest=drivePoints.at(-1) ?? points.at(-1)
+  const fieldSummary=latest ? `${state.possession === 'home' ? state.home.short : state.away.short} possession, ball on ${latest.ballOn}. Current drive has ${Math.max(0,drivePoints.length-1)} recorded movement events.` : 'No drive data yet.'
+  const scoreSummary=`${state.home.short} ${state.home.score}, ${state.away.short} ${state.away.score}.`
+  fieldEl.setAttribute('aria-label',`Drive map. ${fieldSummary}`)
+  scoreEl.setAttribute('aria-label',`Scoring timeline. ${scoreSummary}`)
+  if(fieldSummaryEl) fieldSummaryEl.textContent=fieldSummary
+  if(scoreSummaryEl) scoreSummaryEl.textContent=scoreSummary
+  if(dataEl){
+    const rows=points.filter((point,index)=>index===0||point.label!==points[index-1].label).slice(-12)
+    dataEl.innerHTML=`<table><caption>Recent game events</caption><thead><tr><th scope="col">Event</th><th scope="col">Ball</th><th scope="col">Score</th></tr></thead><tbody>${rows.map(point=>`<tr><td>${point.label}</td><td>${point.ballOn}</td><td>${state.home.short} ${point.homeScore}–${point.awayScore} ${state.away.short}</td></tr>`).join('')}</tbody></table>`
+  }
 
   fieldChart ??= echarts.init(fieldEl, undefined, {renderer: 'canvas'})
   scoreChart ??= echarts.init(scoreEl, undefined, {renderer: 'canvas'})

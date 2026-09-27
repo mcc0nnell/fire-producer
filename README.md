@@ -17,7 +17,7 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 **Live captions:** https://fire-producer.stokoe.workers.dev/?cartridge=captions&event=main&mode=viewer  
 **Captioner:** https://fire-producer.stokoe.workers.dev/?cartridge=captions&event=main&mode=operator
 
-## What works in v0.8
+## What works in v0.9
 
 - authoritative per-production `EventDO` on Cloudflare Durable Objects;
 - SQLite-backed append-only event journal;
@@ -44,7 +44,12 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 - deterministic surface priority: weather alert > breaking news > normal program graphics;
 - first-class Live Captions cartridge with partial/final cues, speaker labels, pause state, and transcript history;
 - composite program mounts captions as a persistent fourth authority;
-- provider-neutral caption ingest through the generic command API.
+- provider-neutral caption ingest through the generic command API;
+- Accessibility Agents scanner imported into CI and pinned by donor commit;
+- persistent polite/assertive live regions, skip navigation, visible focus, labeled controls, and user-preference CSS fallbacks;
+- final-only assistive-technology announcements for captions while visual partials remain real-time;
+- accessible text summaries/table equivalents for ECharts Game Center analytics;
+- native controls on real HLS program video.
 
 ```text
 operator/provider -> EventDO -> SQLite event log
@@ -71,7 +76,7 @@ Without `?stream=`, the viewer uses a synthetic football program feed for an imm
 
 ## Event cartridges
 
-See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md), [`docs/API.md`](docs/API.md), and [`docs/CAPTIONS.md`](docs/CAPTIONS.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
+See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md), [`docs/API.md`](docs/API.md), [`docs/CAPTIONS.md`](docs/CAPTIONS.md), and [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
 ## Storage
 

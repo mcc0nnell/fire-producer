@@ -1,0 +1,21 @@
+name: Accessibility
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+  security-events: write
+jobs:
+  accessibility-agents:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # Pinned donor: mcc0nnell/accessibility-agents @ 161c60c7493ad657f371ad8f91253d33c3b12044
+      - name: WCAG 2.2 AA static scan
+        uses: mcc0nnell/accessibility-agents/action@161c60c7493ad657f371ad8f91253d33c3b12044
+        with:
+          scan-type: web
+          profile: moderate
+          fail-on: serious
+          paths: .
+          upload-sarif: true

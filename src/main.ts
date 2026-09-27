@@ -1,5 +1,6 @@
 import './style.css'
 import {visibleClock, type GameState} from './core/game'
+import {announceStatus} from './a11y'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
 const params = new URLSearchParams(location.search)
@@ -38,7 +39,7 @@ function fmt(ms: number) {
 
 function buildShell(s: GameState) {
   root.innerHTML = `
-    <main class="shell ${mode}">
+    <main id="main-content" tabindex="-1" class="shell ${mode}">
       <header class="topbar">
         <div class="brand-lockup">
           <span class="fire-mark"><i></i><i></i><i></i></span>
@@ -55,7 +56,7 @@ function buildShell(s: GameState) {
 
       <section class="stage" aria-label="Live program output">
         <div class="program-feed">
-          ${streamUrl ? '<video id="program-video" autoplay muted playsinline></video>' : syntheticField()}
+          ${streamUrl ? '<video id="program-video" autoplay muted playsinline controls aria-label="Live program video"></video>' : syntheticField()}
           <div class="broadcast-shade"></div>
           <div class="program-id"><span class="live-dot"></span> LIVE <b>CAM 1</b></div>
           <div class="network-bug">1080p <span>•</span> PROGRAM</div>
@@ -122,6 +123,7 @@ function operatorPanel(s: GameState) {
       </section>
       <section class="control-bank text-bank">
         <h2>Caption / lower third</h2>
+        <label class="visually-hidden" for="caption-input">Caption or lower-third text</label>
         <textarea id="caption-input" maxlength="240" rows="3">${esc(s.caption)}</textarea>
         <button class="primary take-text" data-cmd="caption">TAKE TEXT TO PROGRAM</button>
       </section>
@@ -133,9 +135,9 @@ function viewerPanel() {
   return `<aside class="game-center" data-drawer aria-hidden="true">
     <div class="drawer-head"><div><small>FIRE PRODUCER</small><h2>Game Center</h2></div><button data-action="drawer" aria-label="Close game center">×</button></div>
     <div class="viewer-facts"><div><small>QUARTER</small><b data-drawer-quarter></b></div><div><small>DOWN</small><b data-drawer-down></b></div><div><small>BALL ON</small><b data-drawer-ball></b></div></div>
-    <section class="analytics-card field-card"><div class="analytics-head"><div><small>LIVE POSITION</small><h3>Drive map</h3></div><span>ECHARTS</span></div><div class="field-chart" data-field-chart role="img" aria-label="Current drive field position"></div></section>
-    <section class="analytics-card score-card"><div class="analytics-head"><div><small>GAME FLOW</small><h3>Scoring timeline</h3></div><span>LIVE</span></div><div class="score-chart" data-score-chart role="img" aria-label="Scoring timeline"></div></section>
-    <h3 class="drive-heading">CURRENT DRIVE</h3><div class="drive" data-drive></div>
+    <section class="analytics-card field-card"><div class="analytics-head"><div><small>LIVE POSITION</small><h3>Drive map</h3></div><span>ECHARTS</span></div><div class="field-chart" data-field-chart role="img" aria-label="Current drive field position"></div><p class="chart-summary" data-field-summary></p></section>
+    <section class="analytics-card score-card"><div class="analytics-head"><div><small>GAME FLOW</small><h3>Scoring timeline</h3></div><span>LIVE</span></div><div class="score-chart" data-score-chart role="img" aria-label="Scoring timeline"></div><p class="chart-summary" data-score-summary></p></section>
+    <details class="chart-data"><summary>Text game data</summary><div data-chart-data></div></details><h3 class="drive-heading">CURRENT DRIVE</h3><div class="drive" data-drive></div>
     <div class="remote-help"><span>▲</span> Open / close with Fire TV remote</div>
   </aside>`
 }
@@ -264,12 +266,12 @@ async function connect() {
     state = data.state
     buildShell(data.state)
   } catch {
-    root.innerHTML = '<main class="loading">Waiting for Fire Producer…</main>'
+    root.innerHTML = '<main id="main-content" tabindex="-1" class="loading">Waiting for Fire Producer…</main>'
   }
 
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
   const ws = new WebSocket(`${proto}//${location.host}${api('ws')}`)
-  ws.onopen = () => { connected = true; updateConnection() }
+  ws.onopen = () => { connected = true; updateConnection(); announceStatus('Fire Producer connected') }
   ws.onmessage = (event) => {
     try {
       const message = JSON.parse(event.data)
@@ -280,7 +282,7 @@ async function connect() {
       }
     } catch {}
   }
-  ws.onclose = () => { connected = false; updateConnection(); window.setTimeout(connectSocketOnly, 1200) }
+  ws.onclose = () => { connected = false; updateConnection(); announceStatus('Fire Producer connection lost. Reconnecting.'); window.setTimeout(connectSocketOnly, 1200) }
 }
 
 function connectSocketOnly() { location.reload() }

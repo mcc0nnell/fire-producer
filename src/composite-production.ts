@@ -2,6 +2,7 @@ import {visibleClock, type GameState} from './core/game'
 import type {NewsState} from './cartridges/news'
 import type {WeatherState} from './cartridges/weather'
 import type {CaptionState} from './cartridges/captions'
+import {announceAlert, announceCaption, announceStatus} from './a11y'
 
 type CompositeState = {football:GameState|null; news:NewsState|null; weather:WeatherState|null; captions:CaptionState|null}
 type Channel = keyof CompositeState
@@ -12,6 +13,9 @@ const fmt=(ms:number)=>{const t=Math.ceil(ms/1000);return `${Math.floor(t/60)}:$
 export function startCompositeProduction(root:HTMLDivElement, footballSlug='demo', newsSlug='evening', weatherSlug='baltimore', captionsSlug='main') {
   const state:CompositeState={football:null,news:null,weather:null,captions:null}
   const connected=new Set<Channel>()
+  let lastAlert=''
+  let lastBreaking=''
+  let lastCaptionSeq=0
   const routes:Record<Channel,string>={
     football:`/api/events/football/${encodeURIComponent(footballSlug)}`,
     news:`/api/events/news/${encodeURIComponent(newsSlug)}`,
@@ -21,16 +25,20 @@ export function startCompositeProduction(root:HTMLDivElement, footballSlug='demo
 
   function render() {
     const f=state.football, n=state.news, w=state.weather, c=state.captions
-    if(!f||!n||!w||!c){root.innerHTML='<main class="loading">Mounting event cartridges…</main>';return}
+    if(!f||!n||!w||!c){root.innerHTML='<main id="main-content" tabindex="-1" class="loading">Mounting event cartridges…</main>';return}
     const alert=w.alert
     const breaking=n.breaking
+    if(alert&&alert.headline!==lastAlert){lastAlert=alert.headline;announceAlert(`${alert.severity}: ${alert.headline}`)}
+    if(breaking&&breaking!==lastBreaking){lastBreaking=breaking;announceStatus(`Breaking news: ${breaking}`)}
+    const latestCaption=c.history.at(-1)
+    if(latestCaption&&latestCaption.seq!==lastCaptionSeq){lastCaptionSeq=latestCaption.seq;announceCaption(latestCaption.speaker,latestCaption.text)}
     const overlay=alert
       ? `<div class="priority-overlay emergency"><b>${esc(alert.severity.toUpperCase())}</b><span>${esc(alert.headline)}</span><small>WEATHER • PRIORITY 100</small></div>`
       : breaking
         ? `<div class="priority-overlay breaking"><b>BREAKING</b><span>${esc(breaking)}</span><small>NEWS • PRIORITY 80</small></div>`
         : ''
     const ticker=n.ticker.length?n.ticker:['Fire Producer composite program online']
-    root.innerHTML=`<main class="shell composite-shell">
+    root.innerHTML=`<main id="main-content" tabindex="-1" class="shell composite-shell">
       <header class="topbar"><div class="brand-lockup"><span class="fire-mark"><i></i><i></i><i></i></span><div><strong>FIRE PRODUCER</strong><small>COMPOSITE PROGRAM</small></div></div><div class="topbar-right"><span class="connection ${connected.size===4?'online':''}"><i></i><span>${connected.size}/4 CARTRIDGES</span></span><nav><a href="?mode=viewer&game=${encodeURIComponent(footballSlug)}">Football</a><a class="active" href="?composite=friday-night">Program</a></nav></div></header>
       <div class="cartridge-title"><span>COMPOSITE PRODUCTION</span><strong>Friday Night Live</strong></div>
       <section class="stage composite-stage">
@@ -40,7 +48,7 @@ export function startCompositeProduction(root:HTMLDivElement, footballSlug='demo
         <aside class="weather-bug"><small>${esc(w.location||weatherSlug)}</small><strong>${w.current?`${w.current.temperature}°`:'—'}</strong><span>${esc(w.current?.condition||'')}</span></aside>
         ${n.lowerThird?`<div class="news-lower-third composite-lower"><strong>${esc(n.lowerThird.name)}</strong><span>${esc(n.lowerThird.title)}</span></div>`:''}
         ${overlay}
-        ${c.current?`<div class="live-caption-overlay ${c.current.final?'final':'partial'}" aria-live="polite">${c.current.speaker?`<small>${esc(c.current.speaker)}</small>`:''}<strong>${esc(c.current.text)}</strong></div>`:''}
+        ${c.current?`<div class="live-caption-overlay ${c.current.final?'final':'partial'}" aria-live="off">${c.current.speaker?`<small>${esc(c.current.speaker)}</small>`:''}<strong>${esc(c.current.text)}</strong></div>`:''}
         <div class="news-ticker composite-ticker"><b>LIVE</b><div class="ticker-track">${ticker.map(x=>`<span>${esc(x)}</span>`).join('<i>◆</i>')}</div></div>
       </section>
       <section class="composition-rack"><div class="console-head"><div><small>CARTRIDGE RACK</small><h1>Mounted capabilities</h1></div><div class="tally"><span></span>PRIORITY ARBITRATION LIVE</div></div><div class="rack-grid">

@@ -26,7 +26,7 @@ export function startCartridgeProduction({root,cartridgeId,slug,mode}:StartOptio
   }
 
   function chrome(title:string, subtitle:string, content:string, controls='') {
-    root.innerHTML=`<main class="shell cartridge-shell ${cartridgeId}-shell ${mode}">
+    root.innerHTML=`<main id="main-content" tabindex="-1" class="shell cartridge-shell ${cartridgeId}-shell ${mode}">
       <header class="topbar">
         <div class="brand-lockup"><span class="fire-mark"><i></i><i></i><i></i></span><div><strong>FIRE PRODUCER</strong><small>${esc(subtitle)}</small></div></div>
         <div class="topbar-right"><span class="connection ${connected?'online':''}" data-cartridge-connection><i></i><span>${connected?'ON AIR':'CONNECTING'}</span></span>
@@ -40,7 +40,7 @@ export function startCartridgeProduction({root,cartridgeId,slug,mode}:StartOptio
   }
 
   function render() {
-    if (!state) { root.innerHTML='<main class="loading">Loading event cartridge…</main>'; return }
+    if (!state) { root.innerHTML='<main id="main-content" tabindex="-1" class="loading">Loading event cartridge…</main>'; return }
     if (cartridgeId==='news') renderNews(state as NewsState)
     else renderWeather(state as WeatherState)
   }
@@ -65,9 +65,9 @@ export function startCartridgeProduction({root,cartridgeId,slug,mode}:StartOptio
       ${s.caption?`<div class="caption-wrap"><div class="caption">${esc(s.caption)}</div></div>`:''}
     </section>`
     const controls=mode==='operator'?`<section class="producer-console news-console"><div class="console-head"><div><small>NEWS CONTROL</small><h1>Rundown / graphics</h1></div><div class="tally"><span></span>PROGRAM LIVE</div></div><div class="news-control-grid">
-      <section class="control-bank"><h2>Story</h2><input id="news-headline" value="${esc(story?.headline||'Harbor redevelopment plan moves forward')}"><textarea id="news-deck" rows="3">${esc(story?.deck||'Live coverage from the evening desk')}</textarea><button class="primary" data-news="story">TAKE STORY</button></section>
-      <section class="control-bank"><h2>Lower third</h2><input id="news-name" value="${esc(lower?.name||'Maya Chen')}"><input id="news-title" value="${esc(lower?.title||'Reporter • City Desk')}"><button data-news="lower">TAKE LOWER THIRD</button><button data-news="clear-lower">CLEAR</button></section>
-      <section class="control-bank"><h2>Breaking</h2><textarea id="news-breaking" rows="3">${esc(breaking||'Breaking news from the Fire Producer desk')}</textarea><button class="danger" data-news="breaking">TAKE BREAKING</button><button data-news="clear-breaking">CLEAR BREAKING</button></section>
+      <section class="control-bank"><h2>Story</h2><label class="visually-hidden" for="news-headline">Story headline</label><input id="news-headline" value="${esc(story?.headline||'Harbor redevelopment plan moves forward')}"><label class="visually-hidden" for="news-deck">Story deck</label><textarea id="news-deck" rows="3">${esc(story?.deck||'Live coverage from the evening desk')}</textarea><button class="primary" data-news="story">TAKE STORY</button></section>
+      <section class="control-bank"><h2>Lower third</h2><label class="visually-hidden" for="news-name">Person name</label><input id="news-name" value="${esc(lower?.name||'Maya Chen')}"><label class="visually-hidden" for="news-title">Person title</label><input id="news-title" value="${esc(lower?.title||'Reporter • City Desk')}"><button data-news="lower">TAKE LOWER THIRD</button><button data-news="clear-lower">CLEAR</button></section>
+      <section class="control-bank"><h2>Breaking</h2><label class="visually-hidden" for="news-breaking">Breaking news text</label><textarea id="news-breaking" rows="3">${esc(breaking||'Breaking news from the Fire Producer desk')}</textarea><button class="danger" data-news="breaking">TAKE BREAKING</button><button data-news="clear-breaking">CLEAR BREAKING</button></section>
     </div></section>`:''
     chrome(story?.headline||'Evening News','LIVE NEWS PRODUCTION',stage,controls)
   }
@@ -87,9 +87,9 @@ export function startCartridgeProduction({root,cartridgeId,slug,mode}:StartOptio
       ${s.caption?`<div class="caption-wrap"><div class="caption">${esc(s.caption)}</div></div>`:''}
     </section>`
     const controls=mode==='operator'?`<section class="producer-console weather-console"><div class="console-head"><div><small>WEATHER CONTROL</small><h1>Conditions / alerts</h1></div><div class="tally"><span></span>PROGRAM LIVE</div></div><div class="weather-control-grid">
-      <section class="control-bank"><h2>Current</h2><input id="weather-location" value="${esc(s.location||'Baltimore, MD')}"><div class="weather-input-row"><input id="weather-temp" inputmode="numeric" value="${current?.temperature??72}"><input id="weather-condition" value="${esc(current?.condition||'Clear')}"></div><input id="weather-wind" value="${esc(current?.wind||'NW 6 mph')}"><button class="primary" data-weather="current">TAKE CONDITIONS</button></section>
-      <section class="control-bank"><h2>Alert</h2><input id="weather-alert-headline" value="${esc(alert?.headline||'Severe thunderstorm warning')}"><textarea id="weather-alert-detail" rows="3">${esc(alert?.detail||'Move indoors and remain away from windows.')}</textarea><button class="danger" data-weather="warning">TAKE WARNING</button><button data-weather="clear-alert">CLEAR ALERT</button></section>
-      <section class="control-bank"><h2>Caption</h2><textarea id="weather-caption" rows="3">${esc(s.caption||'Your local forecast from Fire Producer.')}</textarea><button data-weather="caption">TAKE CAPTION</button></section>
+      <section class="control-bank"><h2>Current</h2><label class="visually-hidden" for="weather-location">Weather location</label><input id="weather-location" value="${esc(s.location||'Baltimore, MD')}"><div class="weather-input-row"><label class="visually-hidden" for="weather-temp">Temperature</label><input id="weather-temp" inputmode="numeric" value="${current?.temperature??72}"><label class="visually-hidden" for="weather-condition">Weather condition</label><input id="weather-condition" value="${esc(current?.condition||'Clear')}"></div><label class="visually-hidden" for="weather-wind">Wind</label><input id="weather-wind" value="${esc(current?.wind||'NW 6 mph')}"><button class="primary" data-weather="current">TAKE CONDITIONS</button></section>
+      <section class="control-bank"><h2>Alert</h2><label class="visually-hidden" for="weather-alert-headline">Weather alert headline</label><input id="weather-alert-headline" value="${esc(alert?.headline||'Severe thunderstorm warning')}"><label class="visually-hidden" for="weather-alert-detail">Weather alert detail</label><textarea id="weather-alert-detail" rows="3">${esc(alert?.detail||'Move indoors and remain away from windows.')}</textarea><button class="danger" data-weather="warning">TAKE WARNING</button><button data-weather="clear-alert">CLEAR ALERT</button></section>
+      <section class="control-bank"><h2>Caption</h2><label class="visually-hidden" for="weather-caption">Weather caption text</label><textarea id="weather-caption" rows="3">${esc(s.caption||'Your local forecast from Fire Producer.')}</textarea><button data-weather="caption">TAKE CAPTION</button></section>
     </div></section>`:''
     chrome(s.location||'Weather','LIVE WEATHER PRODUCTION',stage,controls)
   }
@@ -127,7 +127,7 @@ export function startCartridgeProduction({root,cartridgeId,slug,mode}:StartOptio
       const payload=await response.json() as {state:AnyState}
       state=payload.state
       render()
-    } catch { root.innerHTML='<main class="loading">Waiting for event authority…</main>' }
+    } catch { root.innerHTML='<main id="main-content" tabindex="-1" class="loading">Waiting for event authority…</main>' }
 
     const proto=location.protocol==='https:'?'wss:':'ws:'
     const ws=new WebSocket(`${proto}//${location.host}${api('ws')}`)
