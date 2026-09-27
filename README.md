@@ -9,7 +9,12 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 **Live demo:** https://fire-producer.stokoe.workers.dev/?mode=viewer&game=demo  
 **Operator:** https://fire-producer.stokoe.workers.dev/?mode=operator&game=demo
 
-## What works in v0.4
+**News:** https://fire-producer.stokoe.workers.dev/?cartridge=news&event=evening&mode=viewer  
+**News producer:** https://fire-producer.stokoe.workers.dev/?cartridge=news&event=evening&mode=operator  
+**Weather:** https://fire-producer.stokoe.workers.dev/?cartridge=weather&event=baltimore&mode=viewer  
+**Weather producer:** https://fire-producer.stokoe.workers.dev/?cartridge=weather&event=baltimore&mode=operator
+
+## What works in v0.6
 
 - authoritative per-game `GameDO` on Cloudflare Durable Objects;
 - SQLite-backed append-only event journal;
@@ -26,7 +31,12 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 - animated scoring / possession stings and resilient scorebug/caption overlays;
 - deterministic reducer tests;
 - an open `EventCartridge` contract;
-- executable Football, News, and Weather cartridge cores.
+- executable Football, News, and Weather cartridge cores;
+- generic `EventDO` authority keyed by cartridge + production slug;
+- one common state/events/command/WebSocket API across cartridges;
+- football compatibility routes preserved over the generic runtime;
+- live News viewer/producer surface driven by the News cartridge;
+- live Weather viewer/producer surface driven by the Weather cartridge.
 
 ```text
 operator -> GameDO -> SQLite event log
@@ -53,7 +63,7 @@ Without `?stream=`, the viewer uses a synthetic football program feed for an imm
 
 ## Event cartridges
 
-See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
+See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md) and [`docs/API.md`](docs/API.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
 ## Storage
 

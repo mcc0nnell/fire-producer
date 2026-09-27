@@ -5,7 +5,13 @@
   "compatibility_flags": ["nodejs_compat"],
   "assets": {"directory": "./dist", "binding": "ASSETS"},
   "durable_objects": {
-    "bindings": [{"name": "GAME", "class_name": "GameDO"}]
+    "bindings": [
+      {"name": "GAME", "class_name": "GameDO"},
+      {"name": "EVENT", "class_name": "EventDO"}
+    ]
   },
-  "migrations": [{"tag": "v1", "new_sqlite_classes": ["GameDO"]}]
+  "migrations": [
+    {"tag": "v1", "new_sqlite_classes": ["GameDO"]},
+    {"tag": "v2", "new_sqlite_classes": ["EventDO"]}
+  ]
 }

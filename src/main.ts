@@ -5,6 +5,8 @@ const root = document.querySelector<HTMLDivElement>('#app')!
 const params = new URLSearchParams(location.search)
 const mode = params.get('mode') === 'operator' ? 'operator' : 'viewer'
 const slug = params.get('game') || 'demo'
+const cartridgeId = params.get('cartridge') || 'football'
+const productionSlug = params.get('event') || slug
 const streamUrl = params.get('stream')
 
 let state: GameState | null = null
@@ -294,5 +296,9 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' || event.key === 'Backspace') toggleDrawer(false)
 })
 
-connect()
-setInterval(refreshClock, 200)
+if (cartridgeId === 'news' || cartridgeId === 'weather') {
+  import('./cartridge-production').then(({startCartridgeProduction}) => startCartridgeProduction({root,cartridgeId,slug:productionSlug,mode}))
+} else {
+  connect()
+  setInterval(refreshClock, 200)
+}
