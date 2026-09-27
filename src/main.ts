@@ -1,79 +1,286 @@
 import './style.css'
-import {visibleClock, type GameCommand, type GameState} from './core/game'
+import {visibleClock, type GameState} from './core/game'
 
 const root = document.querySelector<HTMLDivElement>('#app')!
 const params = new URLSearchParams(location.search)
 const mode = params.get('mode') === 'operator' ? 'operator' : 'viewer'
 const slug = params.get('game') || 'demo'
+const streamUrl = params.get('stream')
+
 let state: GameState | null = null
+let drawerOpen = false
+let connected = false
+let stingTimer: number | undefined
 
 const id = () => crypto.randomUUID()
 const api = (action: string) => `/api/games/${encodeURIComponent(slug)}/${action}`
+const esc = (value: string) => value.replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]!))
 
 async function send(command: object) {
-  await fetch(api('command'), {method: 'POST', headers: {'content-type': 'application/json'}, body: JSON.stringify({...command, idempotencyKey: id()})})
+  const response = await fetch(api('command'), {
+    method: 'POST',
+    headers: {'content-type': 'application/json'},
+    body: JSON.stringify({...command, idempotencyKey: id()}),
+  })
+  if (!response.ok) throw new Error(`command failed: ${response.status}`)
 }
 
 function fmt(ms: number) {
-  const total = Math.ceil(ms / 1000); const m = Math.floor(total / 60); const s = total % 60
+  const total = Math.ceil(ms / 1000)
+  const m = Math.floor(total / 60)
+  const s = total % 60
   return `${m}:${String(s).padStart(2, '0')}`
 }
 
-function render() {
-  if (!state) { root.innerHTML = '<main class="loading">Connecting to game…</main>'; return }
-  const s = state
+function buildShell(s: GameState) {
   root.innerHTML = `
     <main class="shell ${mode}">
-      <header><div><span class="live">LIVE</span><strong>FIRE PRODUCER</strong></div><nav><a href="?mode=viewer&game=${slug}">Viewer</a><a href="?mode=operator&game=${slug}">Operator</a></nav></header>
-      <section class="stage">
-        <div class="video"><div class="field"><span>LIVE PROGRAM FEED</span><small>HLS / encoder input lands here</small></div></div>
-        <div class="scorebug">
-          <div><b>${s.away.short}</b><strong>${s.away.score}</strong></div>
-          <div><b>${s.home.short}</b><strong>${s.home.score}</strong></div>
-          <div class="meta"><span>Q${s.quarter}</span><span data-clock>${fmt(visibleClock(s))}</span><span>${s.down}&amp;${s.distance}</span><span>${s.possession === 'home' ? s.home.short : s.away.short} · ${s.ballOn}</span></div>
+      <header class="topbar">
+        <div class="brand-lockup">
+          <span class="fire-mark"><i></i><i></i><i></i></span>
+          <div><strong>FIRE PRODUCER</strong><small>LIVE EVENT CONTROL</small></div>
         </div>
-        <div class="caption" aria-live="polite">${s.caption || '&nbsp;'}</div>
+        <div class="topbar-right">
+          <span class="connection" data-connection><i></i><span>CONNECTING</span></span>
+          <nav>
+            <a class="${mode === 'viewer' ? 'active' : ''}" href="?mode=viewer&game=${encodeURIComponent(slug)}${streamUrl ? `&stream=${encodeURIComponent(streamUrl)}` : ''}">Viewer</a>
+            <a class="${mode === 'operator' ? 'active' : ''}" href="?mode=operator&game=${encodeURIComponent(slug)}${streamUrl ? `&stream=${encodeURIComponent(streamUrl)}` : ''}">Producer</a>
+          </nav>
+        </div>
+      </header>
+
+      <section class="stage" aria-label="Live program output">
+        <div class="program-feed">
+          ${streamUrl ? '<video id="program-video" autoplay muted playsinline></video>' : syntheticField()}
+          <div class="broadcast-shade"></div>
+          <div class="program-id"><span class="live-dot"></span> LIVE <b>CAM 1</b></div>
+          <div class="network-bug">1080p <span>•</span> PROGRAM</div>
+        </div>
+
+        <div class="scorebug" aria-label="Game score">
+          <div class="teams">
+            <div class="team away" data-away-possession><span class="possession-arrow">▶</span><b data-away-short></b><strong data-away-score></strong></div>
+            <div class="team home" data-home-possession><span class="possession-arrow">▶</span><b data-home-short></b><strong data-home-score></strong></div>
+          </div>
+          <div class="game-strip">
+            <span class="quarter" data-quarter></span>
+            <strong class="clock" data-clock></strong>
+            <span class="down" data-down></span>
+            <span class="spot" data-spot></span>
+          </div>
+        </div>
+
+        <div class="caption-wrap"><div class="caption" data-caption aria-live="polite"></div></div>
+        <button class="viewer-peek" data-action="drawer" aria-expanded="false">▲ GAME CENTER</button>
+        <div class="sting" data-sting aria-hidden="true"><span data-sting-kicker></span><strong data-sting-title></strong><small data-sting-sub></small></div>
       </section>
-      ${mode === 'operator' ? operator(s) : viewer(s)}
+
+      ${mode === 'operator' ? operatorPanel(s) : viewerPanel()}
     </main>`
+
   bind()
+  setupVideo()
+  update(s)
 }
 
-function operator(s: GameState) { return `
-  <section class="panel controls">
-    <h2>Game control</h2>
-    <div class="control-grid">
-      <button data-cmd="away7">${s.away.short} +7</button><button data-cmd="home7">${s.home.short} +7</button>
-      <button data-cmd="down">Next down</button><button data-cmd="possession">Flip possession</button>
-      <button data-cmd="clock">${s.clock.running ? 'Stop' : 'Start'} clock</button><button data-cmd="quarter">Next quarter</button>
+function syntheticField() {
+  return `<div class="synthetic-field" aria-label="Synthetic football program feed">
+    <div class="stadium-glow"></div>
+    <div class="field-plane">
+      ${[10,20,30,40,50,40,30,20,10].map((yard, i) => `<span class="yard" style="--i:${i}"><b>${yard}</b></span>`).join('')}
+      <div class="mid-logo"><span>FIRE</span><b>PRODUCER</b></div>
     </div>
-    <label>Caption / lower-third text<input id="caption" value="${s.caption.replaceAll('"','&quot;')}" maxlength="240"><button data-cmd="caption">TAKE TEXT</button></label>
-  </section>` }
+    <div class="camera-label"><b>PROGRAM FEED</b><span>Add <code>?stream=https://…m3u8</code> for HLS</span></div>
+  </div>`
+}
 
-function viewer(s: GameState) { return `
-  <section class="panel"><h2>Current drive</h2><div class="drive">${s.drive.length ? s.drive.slice().reverse().map(x => `<div><span>#${x.seq}</span>${x.text}</div>`).join('') : '<p>No drive events yet.</p>'}</div></section>` }
+function operatorPanel(s: GameState) {
+  return `<section class="producer-console">
+    <div class="console-head">
+      <div><small>PRODUCTION CONTROL</small><h1>Game ${esc(slug.toUpperCase())}</h1></div>
+      <div class="tally"><span></span>PROGRAM LIVE</div>
+    </div>
+    <div class="console-grid">
+      <section class="control-bank score-bank">
+        <h2>Score</h2>
+        <div class="team-takes"><button class="take away-take" data-cmd="away7"><small data-away-short></small><b>TOUCHDOWN</b><span>+7</span></button><button class="take home-take" data-cmd="home7"><small data-home-short></small><b>TOUCHDOWN</b><span>+7</span></button></div>
+        <div class="micro-row"><button data-cmd="away3"><span data-away-short></span> +3</button><button data-cmd="home3"><span data-home-short></span> +3</button></div>
+      </section>
+      <section class="control-bank situation-bank">
+        <h2>Situation</h2>
+        <div class="situation-readout"><div><small>DOWN</small><b data-op-down>${s.down}</b></div><div><small>TO GO</small><b data-op-distance>${s.distance}</b></div><div><small>BALL</small><b data-op-ball>${s.ballOn}</b></div></div>
+        <div class="button-grid"><button data-cmd="down">NEXT DOWN</button><button data-cmd="distance-minus">TO GO −1</button><button data-cmd="distance-plus">TO GO +1</button><button data-cmd="ball-minus">BALL −5</button><button data-cmd="ball-plus">BALL +5</button><button data-cmd="possession">FLIP POSSESSION</button></div>
+      </section>
+      <section class="control-bank clock-bank">
+        <h2>Clock</h2>
+        <div class="big-clock" data-op-clock>${fmt(visibleClock(s))}</div>
+        <div class="button-grid two"><button class="primary" data-cmd="clock" data-clock-button>START</button><button data-cmd="quarter">NEXT QUARTER</button></div>
+      </section>
+      <section class="control-bank text-bank">
+        <h2>Caption / lower third</h2>
+        <textarea id="caption-input" maxlength="240" rows="3">${esc(s.caption)}</textarea>
+        <button class="primary take-text" data-cmd="caption">TAKE TEXT TO PROGRAM</button>
+      </section>
+    </div>
+  </section>`
+}
+
+function viewerPanel() {
+  return `<aside class="game-center" data-drawer aria-hidden="true">
+    <div class="drawer-head"><div><small>FIRE PRODUCER</small><h2>Game Center</h2></div><button data-action="drawer" aria-label="Close game center">×</button></div>
+    <div class="viewer-facts"><div><small>QUARTER</small><b data-drawer-quarter></b></div><div><small>DOWN</small><b data-drawer-down></b></div><div><small>BALL ON</small><b data-drawer-ball></b></div></div>
+    <h3>CURRENT DRIVE</h3><div class="drive" data-drive></div>
+    <div class="remote-help"><span>▲</span> Open / close with Fire TV remote</div>
+  </aside>`
+}
+
+async function setupVideo() {
+  if (!streamUrl) return
+  const video = document.querySelector<HTMLVideoElement>('#program-video')
+  if (!video) return
+  if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    video.src = streamUrl
+    video.play().catch(() => undefined)
+    return
+  }
+  const {default: Hls} = await import('hls.js')
+  if (Hls.isSupported()) {
+    const hls = new Hls({lowLatencyMode: true, backBufferLength: 30})
+    hls.loadSource(streamUrl)
+    hls.attachMedia(video)
+    hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => undefined))
+  }
+}
+
+function text(selector: string, value: string) {
+  document.querySelectorAll<HTMLElement>(selector).forEach((el) => { el.textContent = value })
+}
+
+function update(s: GameState, previous?: GameState | null) {
+  state = s
+  text('[data-away-short]', s.away.short)
+  text('[data-home-short]', s.home.short)
+  text('[data-away-score]', String(s.away.score))
+  text('[data-home-score]', String(s.home.score))
+  text('[data-quarter]', `Q${s.quarter}`)
+  text('[data-down]', `${ordinal(s.down)} & ${s.distance}`)
+  text('[data-spot]', `${s.possession === 'home' ? s.home.short : s.away.short} ${s.ballOn}`)
+  text('[data-caption]', s.caption)
+  text('[data-op-down]', String(s.down))
+  text('[data-op-distance]', String(s.distance))
+  text('[data-op-ball]', String(s.ballOn))
+  text('[data-drawer-quarter]', `Q${s.quarter}`)
+  text('[data-drawer-down]', `${ordinal(s.down)} & ${s.distance}`)
+  text('[data-drawer-ball]', String(s.ballOn))
+
+  document.querySelectorAll('[data-home-possession]').forEach((el) => el.classList.toggle('has-ball', s.possession === 'home'))
+  document.querySelectorAll('[data-away-possession]').forEach((el) => el.classList.toggle('has-ball', s.possession === 'away'))
+  const clockButton = document.querySelector<HTMLElement>('[data-clock-button]')
+  if (clockButton) clockButton.textContent = s.clock.running ? 'STOP' : 'START'
+
+  const drive = document.querySelector<HTMLElement>('[data-drive]')
+  if (drive) drive.innerHTML = s.drive.length
+    ? s.drive.slice().reverse().map((x, i) => `<div class="drive-event ${i === 0 ? 'latest' : ''}"><span>${String(x.seq).padStart(2,'0')}</span><b>${esc(x.text)}</b></div>`).join('')
+    : '<p class="empty-drive">Waiting for the first snap.</p>'
+
+  if (previous) detectSting(previous, s)
+  refreshClock()
+}
+
+function detectSting(before: GameState, after: GameState) {
+  if (after.home.score > before.home.score) showSting('SCORE', after.home.short, `+${after.home.score - before.home.score}`)
+  else if (after.away.score > before.away.score) showSting('SCORE', after.away.short, `+${after.away.score - before.away.score}`)
+  else if (after.possession !== before.possession) showSting('POSSESSION', after.possession === 'home' ? after.home.short : after.away.short, `BALL ON ${after.ballOn}`)
+}
+
+function showSting(kicker: string, title: string, sub: string) {
+  const sting = document.querySelector<HTMLElement>('[data-sting]')
+  if (!sting) return
+  text('[data-sting-kicker]', kicker); text('[data-sting-title]', title); text('[data-sting-sub]', sub)
+  sting.classList.remove('show'); void sting.offsetWidth; sting.classList.add('show'); sting.setAttribute('aria-hidden','false')
+  if (stingTimer) clearTimeout(stingTimer)
+  stingTimer = window.setTimeout(() => { sting.classList.remove('show'); sting.setAttribute('aria-hidden','true') }, 2200)
+}
+
+function ordinal(n: number) { return n === 1 ? '1ST' : n === 2 ? '2ND' : n === 3 ? '3RD' : `${n}TH` }
+
+function toggleDrawer(force?: boolean) {
+  drawerOpen = force ?? !drawerOpen
+  const drawer = document.querySelector<HTMLElement>('[data-drawer]')
+  drawer?.classList.toggle('open', drawerOpen)
+  drawer?.setAttribute('aria-hidden', String(!drawerOpen))
+  document.querySelectorAll<HTMLElement>('[data-action="drawer"]').forEach((el) => el.setAttribute('aria-expanded', String(drawerOpen)))
+}
 
 function bind() {
+  document.querySelectorAll<HTMLButtonElement>('[data-action="drawer"]').forEach((button) => button.onclick = () => toggleDrawer())
   document.querySelectorAll<HTMLButtonElement>('[data-cmd]').forEach((button) => button.onclick = async () => {
     if (!state) return
+    button.classList.add('fired'); window.setTimeout(() => button.classList.remove('fired'), 180)
     switch (button.dataset.cmd) {
       case 'away7': await send({type:'SCORE', team:'away', points:7}); break
       case 'home7': await send({type:'SCORE', team:'home', points:7}); break
+      case 'away3': await send({type:'SCORE', team:'away', points:3}); break
+      case 'home3': await send({type:'SCORE', team:'home', points:3}); break
       case 'down': await send({type:'SET_DOWN', down: state.down === 4 ? 1 : state.down + 1}); break
+      case 'distance-minus': await send({type:'SET_DISTANCE', distance: Math.max(1, state.distance - 1)}); break
+      case 'distance-plus': await send({type:'SET_DISTANCE', distance: state.distance + 1}); break
+      case 'ball-minus': await send({type:'SET_BALL_ON', ballOn: Math.max(1, state.ballOn - 5)}); break
+      case 'ball-plus': await send({type:'SET_BALL_ON', ballOn: Math.min(99, state.ballOn + 5)}); break
       case 'possession': await send({type:'SET_POSSESSION', team: state.possession === 'home' ? 'away' : 'home'}); break
       case 'clock': await send({type: state.clock.running ? 'STOP_CLOCK' : 'START_CLOCK'}); break
       case 'quarter': await send({type:'SET_QUARTER', quarter: state.quarter + 1}); break
-      case 'caption': await send({type:'CAPTION', text:(document.querySelector<HTMLInputElement>('#caption')?.value || '')}); break
+      case 'caption': await send({type:'CAPTION', text: document.querySelector<HTMLTextAreaElement>('#caption-input')?.value || ''}); break
     }
   })
 }
 
+function refreshClock() {
+  if (!state) return
+  const value = fmt(visibleClock(state))
+  text('[data-clock]', value)
+  text('[data-op-clock]', value)
+}
+
 async function connect() {
-  try { const r = await fetch(api('state')); const data = await r.json() as {state:GameState}; state = data.state; render() } catch { render() }
+  try {
+    const response = await fetch(api('state'))
+    const data = await response.json() as {state: GameState}
+    state = data.state
+    buildShell(data.state)
+  } catch {
+    root.innerHTML = '<main class="loading">Waiting for Fire Producer…</main>'
+  }
+
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:'
   const ws = new WebSocket(`${proto}//${location.host}${api('ws')}`)
-  ws.onmessage = (event) => { try { const m = JSON.parse(event.data); if (m.state) { state = m.state; render() } } catch {} }
-  ws.onclose = () => setTimeout(connect, 1000)
+  ws.onopen = () => { connected = true; updateConnection() }
+  ws.onmessage = (event) => {
+    try {
+      const message = JSON.parse(event.data)
+      if (message.state) {
+        const previous = state
+        if (!root.querySelector('.shell')) buildShell(message.state)
+        else update(message.state, previous)
+      }
+    } catch {}
+  }
+  ws.onclose = () => { connected = false; updateConnection(); window.setTimeout(connectSocketOnly, 1200) }
 }
+
+function connectSocketOnly() { location.reload() }
+function updateConnection() {
+  const el = document.querySelector<HTMLElement>('[data-connection]')
+  if (!el) return
+  el.classList.toggle('online', connected)
+  const label = el.querySelector('span'); if (label) label.textContent = connected ? 'ON AIR' : 'RECONNECTING'
+}
+
+document.addEventListener('keydown', (event) => {
+  if (mode !== 'viewer') return
+  if (event.key === 'ArrowUp') { event.preventDefault(); toggleDrawer() }
+  if (event.key === 'Escape' || event.key === 'Backspace') toggleDrawer(false)
+})
+
 connect()
-setInterval(() => { const el = document.querySelector<HTMLElement>('[data-clock]'); if (el && state) el.textContent = fmt(visibleClock(state)) }, 250)
+setInterval(refreshClock, 200)

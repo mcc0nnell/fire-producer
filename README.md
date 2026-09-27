@@ -9,7 +9,7 @@ The first vertical slice is football.
 **Live demo:** https://fire-producer.stokoe.workers.dev/?mode=viewer&game=demo  
 **Operator:** https://fire-producer.stokoe.workers.dev/?mode=operator&game=demo
 
-## What works in v0.1
+## What works in v0.2
 
 - authoritative per-game `GameDO` on Cloudflare Durable Objects;
 - SQLite-backed append-only event journal;
@@ -18,7 +18,10 @@ The first vertical slice is football.
 - football score, quarter, clock, down/distance, field position, possession;
 - caption/lower-third text;
 - live drive history;
-- viewer and operator modes from one Vite build;
+- broadcast-grade viewer and producer surfaces from one Vite build;
+- HLS program-feed input via `?stream=<m3u8-url>` with native playback or hls.js fallback;
+- Fire TV remote-friendly Game Center (`ArrowUp` opens/closes it);
+- animated scoring / possession stings and resilient scorebug/caption overlays;
 - deterministic reducer tests.
 
 ```text
@@ -42,7 +45,7 @@ Then open:
 - viewer: `http://localhost:8787/?mode=viewer&game=demo`
 - operator: `http://localhost:8787/?mode=operator&game=demo`
 
-The video area is deliberately a program-feed placeholder in v0.1. The next slice binds HLS/encoder input and packages the viewer for Fire TV/Vega while preserving the same game-state authority.
+Without `?stream=`, the viewer uses a synthetic football program feed for an immediately reproducible demo. Pass an HLS playlist URL as `?stream=https://…m3u8` to bind a real encoder/program feed. The next slice packages the viewer as the Fire TV/Vega submission while preserving the same game-state authority.
 
 ## Storage
 
