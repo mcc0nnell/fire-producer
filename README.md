@@ -12,9 +12,10 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 **News:** https://fire-producer.stokoe.workers.dev/?cartridge=news&event=evening&mode=viewer  
 **News producer:** https://fire-producer.stokoe.workers.dev/?cartridge=news&event=evening&mode=operator  
 **Weather:** https://fire-producer.stokoe.workers.dev/?cartridge=weather&event=baltimore&mode=viewer  
-**Weather producer:** https://fire-producer.stokoe.workers.dev/?cartridge=weather&event=baltimore&mode=operator
+**Weather producer:** https://fire-producer.stokoe.workers.dev/?cartridge=weather&event=baltimore&mode=operator  
+**Composite program:** https://fire-producer.stokoe.workers.dev/?composite=friday-night
 
-## What works in v0.6
+## What works in v0.7
 
 - authoritative per-game `GameDO` on Cloudflare Durable Objects;
 - SQLite-backed append-only event journal;
@@ -36,7 +37,9 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 - one common state/events/command/WebSocket API across cartridges;
 - football compatibility routes preserved over the generic runtime;
 - live News viewer/producer surface driven by the News cartridge;
-- live Weather viewer/producer surface driven by the Weather cartridge.
+- live Weather viewer/producer surface driven by the Weather cartridge;
+- composite production surface mounting Football + News + Weather simultaneously;
+- deterministic surface priority: weather alert > breaking news > normal program graphics.
 
 ```text
 operator -> GameDO -> SQLite event log

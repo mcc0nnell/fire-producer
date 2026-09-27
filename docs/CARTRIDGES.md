@@ -38,7 +38,7 @@ Executable core semantics now exist for location, current conditions, forecast p
 
 ## Composition
 
-The long-term model permits multiple cartridges to contribute to one program. A football show can mount weather and news capabilities; an emergency alert cartridge can claim a higher-priority surface than a scorebug or ticker.
+The runtime now demonstrates multiple cartridges contributing to one program through the composite production surface. A football show can mount weather and news capabilities; an emergency alert cartridge can claim a higher-priority surface than a scorebug or ticker.
 
 ```text
 Fire Producer
@@ -52,3 +52,7 @@ Fire Producer
 ```
 
 Cartridges must remain deterministic. External feeds become explicit input events; they do not mutate presentation state behind the event log.
+
+## Surface arbitration
+
+The first composition policy is explicit and deterministic: Weather alert priority 100, News breaking priority 80, Football scorebug priority 50. The composite viewer subscribes to all mounted authorities and projects the highest-priority active override while retaining lower-priority persistent surfaces such as the scorebug, weather bug, lower third, and ticker.

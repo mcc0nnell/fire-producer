@@ -8,6 +8,7 @@ const slug = params.get('game') || 'demo'
 const cartridgeId = params.get('cartridge') || 'football'
 const productionSlug = params.get('event') || slug
 const streamUrl = params.get('stream')
+const composite = params.get('composite')
 
 let state: GameState | null = null
 let drawerOpen = false
@@ -296,7 +297,9 @@ document.addEventListener('keydown', (event) => {
   if (event.key === 'Escape' || event.key === 'Backspace') toggleDrawer(false)
 })
 
-if (cartridgeId === 'news' || cartridgeId === 'weather') {
+if (composite) {
+  import('./composite-production').then(({startCompositeProduction}) => startCompositeProduction(root, slug, params.get('news') || 'evening', params.get('weather') || 'baltimore'))
+} else if (cartridgeId === 'news' || cartridgeId === 'weather') {
   import('./cartridge-production').then(({startCartridgeProduction}) => startCartridgeProduction({root,cartridgeId,slug:productionSlug,mode}))
 } else {
   connect()
