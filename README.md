@@ -2,14 +2,14 @@
 
 **Live production for every field, stage, and venue.**
 
-Fire Producer is an event-sourced live production and interactive streaming system for Fire TV and the web. A scorer or producer controls one authoritative game state; viewers, scorebugs, captions, alternate displays, and future Alexa experiences project from that same state.
+Fire Producer is an independent event-sourced live production and interactive streaming system. A producer controls authoritative event state; televisions, browsers, scorebugs, captions, alternate displays, archives, and analytical surfaces project from that same state.
 
-The first vertical slice is football.
+The first live vertical slice is football. The runtime is growing into a cartridge-based production system for sports, news, weather, conferences, public events, and other live programming.
 
 **Live demo:** https://fire-producer.stokoe.workers.dev/?mode=viewer&game=demo  
 **Operator:** https://fire-producer.stokoe.workers.dev/?mode=operator&game=demo
 
-## What works in v0.3
+## What works in v0.4
 
 - authoritative per-game `GameDO` on Cloudflare Durable Objects;
 - SQLite-backed append-only event journal;
@@ -24,7 +24,9 @@ The first vertical slice is football.
 - lazy-loaded Apache ECharts Drive Map reconstructed from field-position events;
 - lazy-loaded ECharts scoring timeline reconstructed from the durable game log;
 - animated scoring / possession stings and resilient scorebug/caption overlays;
-- deterministic reducer tests.
+- deterministic reducer tests;
+- an open `EventCartridge` contract;
+- executable Football, News, and Weather cartridge cores.
 
 ```text
 operator -> GameDO -> SQLite event log
@@ -47,7 +49,11 @@ Then open:
 - viewer: `http://localhost:8787/?mode=viewer&game=demo`
 - operator: `http://localhost:8787/?mode=operator&game=demo`
 
-Without `?stream=`, the viewer uses a synthetic football program feed for an immediately reproducible demo. Pass an HLS playlist URL as `?stream=https://…m3u8` to bind a real encoder/program feed. The next slice packages the viewer as the Fire TV/Vega submission while preserving the same game-state authority.
+Without `?stream=`, the viewer uses a synthetic football program feed for an immediately reproducible demo. Pass an HLS playlist URL as `?stream=https://…m3u8` to bind a real encoder/program feed. The viewer is device-neutral web software; television-specific packaging can be layered on without changing game-state authority.
+
+## Event cartridges
+
+See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
 
 ## Storage
 
