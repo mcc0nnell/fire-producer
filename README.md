@@ -74,6 +74,15 @@ Then open:
 
 Without `?stream=`, the viewer uses a synthetic football program feed for an immediately reproducible demo. Pass an HLS playlist URL as `?stream=https://…m3u8` to bind a real encoder/program feed. The viewer is device-neutral web software; television-specific packaging can be layered on without changing game-state authority.
 
+## Native Celix runtime (experimental)
+
+A separate C11/Apache Celix authority under [`native/`](native/README.md) now provides
+transactional SQLite event journaling, football and captions service bundles,
+and an owner-only local JSON control socket. Its replay and socket tests pass
+on Linux. This is not yet a complete Cloudflare API replacement, and no live
+production has been migrated. See [`docs/NATIVE_CELIX.md`](docs/NATIVE_CELIX.md)
+for the TV surface review and cutover criteria.
+
 ## Event cartridges
 
 See [`docs/CARTRIDGES.md`](docs/CARTRIDGES.md), [`docs/API.md`](docs/API.md), [`docs/CAPTIONS.md`](docs/CAPTIONS.md), and [`docs/ACCESSIBILITY.md`](docs/ACCESSIBILITY.md). Football is the first live cartridge; News and Weather now have executable deterministic reducers and tests. The product thesis is in [`docs/PRODUCT.md`](docs/PRODUCT.md).
