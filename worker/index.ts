@@ -1,4 +1,5 @@
 import {GameDO} from './game-do'
+import {authorizedConferenceCommand} from './conference-auth'
 import {EventDO} from './event-do'
 import {cartridgeManifests, type CartridgeId} from '../src/cartridges'
 export {GameDO, EventDO}
@@ -7,6 +8,7 @@ type Env = {
   GAME: DurableObjectNamespace<GameDO>
   EVENT: DurableObjectNamespace<EventDO>
   ASSETS: Fetcher
+  PRODUCER_TOKEN?: string
 }
 
 type EventRoute = {cartridge:CartridgeId; slug:string; action:'manifest'|'state'|'events'|'command'|'ws'}
@@ -26,6 +28,11 @@ export default {
 
     const route=eventRoute(url.pathname)
     if (route) {
+      if (route.cartridge==='conference' && route.action==='command') {
+        if (!env.PRODUCER_TOKEN || env.PRODUCER_TOKEN.length<24) return Response.json({error:'Conference operator token not configured'},{status:503})
+        if (request.method!=='POST') return new Response('Method not allowed',{status:405})
+        if (!await authorizedConferenceCommand(request,env.PRODUCER_TOKEN)) return Response.json({error:'Unauthorized'},{status:401})
+      }
       const authorityKey=`${route.cartridge}:${route.slug}`
       const id=env.EVENT.idFromName(authorityKey)
       const stub=env.EVENT.get(id)
