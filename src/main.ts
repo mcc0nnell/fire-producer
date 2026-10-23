@@ -301,6 +301,8 @@ document.addEventListener('keydown', (event) => {
 
 if (composite) {
   import('./composite-production').then(({startCompositeProduction}) => startCompositeProduction(root, slug, params.get('news') || 'evening', params.get('weather') || 'baltimore', params.get('captions') || 'main'))
+} else if (cartridgeId === 'conference') {
+  import('./conference-production').then(({startConferenceProduction}) => startConferenceProduction(root, productionSlug, mode))
 } else if (cartridgeId === 'captions') {
   import('./caption-production').then(({startCaptionProduction}) => startCaptionProduction(root, productionSlug, mode))
 } else if (cartridgeId === 'news' || cartridgeId === 'weather') {

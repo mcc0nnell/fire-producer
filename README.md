@@ -17,6 +17,12 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 **Live captions:** https://fire-producer.stokoe.workers.dev/?cartridge=captions&event=main&mode=viewer  
 **Captioner:** https://fire-producer.stokoe.workers.dev/?cartridge=captions&event=main&mode=operator
 
+**DC27 conference prototype:** `/?cartridge=conference&event=dc27&mode=viewer`
+
+**DC27 producer:** `/?cartridge=conference&event=dc27&mode=operator`
+
+See [DC27 operations, security and local Tronix bridge](docs/DC27.md). The schedule is **demonstration data**, not DIG's final program. These routes are source-only until deployed.
+
 ## What works in v0.9
 
 - authoritative per-production `EventDO` on Cloudflare Durable Objects;

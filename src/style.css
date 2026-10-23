@@ -202,3 +202,83 @@ button,input,textarea,nav a,summary{min-height:24px}
 @media(prefers-contrast:more){:root{--line:#fff}.shell,.producer-console,.analytics-card,.composition-rack,.caption-viewer-panel>div{border-color:#fff}.connection,.brand-lockup small,.control-bank h2,.chart-summary{color:#fff}.teams,.weather-bug,.news-ticker,.game-center{backdrop-filter:none;background:#000}.news-lower-third{border-left-color:#fff}}
 @media(prefers-reduced-transparency:reduce){.teams,.viewer-peek,.game-center,.weather-bug,.forecast-strip article,.live-caption-overlay strong{backdrop-filter:none;background:#090b0f}.caption,.live-caption-overlay strong{background:#000}}
 @media(forced-colors:active){button,input,textarea,nav a,.analytics-card,.composition-rack,.caption-viewer-panel>div{border:1px solid CanvasText}.fire-mark,.stadium-glow,.weather-glow,.news-grid,.news-orbit{display:none}.connection i,.live-dot,.tally span,.rack-status{background:CanvasText;box-shadow:none}.scorebug,.sting{filter:none}}
+
+/* Conference / DC27: three-day broadcast guide and solo-operator board. */
+.conf-shell{--conf-blue:#152d9c;--conf-rule:#3957d2;max-width:1840px;color:#edf2ff}
+.conf-shell .topbar{min-height:62px;height:auto}
+.conf-shell .topbar-right{flex-wrap:wrap;justify-content:flex-end}
+.conf-shell .topbar nav{border-color:#3451b2}
+.conf-mast{margin:22px 0 0;padding:26px 30px;display:flex;gap:28px;align-items:center;justify-content:space-between;background:linear-gradient(115deg,#0b1344,#1b3297 58%,#14205e);border:1px solid #425fca;border-radius:15px 15px 0 0}
+.conf-mast small{letter-spacing:.2em;font-size:11px;color:#b7c7f7;font-weight:800}
+.conf-mast h1{font-size:clamp(44px,7vw,90px);letter-spacing:-.045em;margin:0;font-weight:950;line-height:1.1}
+.conf-mast h1 span{color:#ffbd59}
+.conf-mast p{font-weight:700;color:#a5b7ef;margin:6px 0 0}
+.conf-mast-metrics{display:flex;gap:25px}
+.conf-mast-metrics div{display:flex;flex-direction:column;gap:6px;min-width:75px}
+.conf-mast-metrics b{font-size:32px}
+.conf-mast-metrics span{font-size:9px;letter-spacing:.15em;color:#aebdeb;font-weight:800}
+.conf-demo{padding:10px 22px;background:#3a220d;color:#ffd6a1;border-inline:1px solid #a65d18;font-size:11px;letter-spacing:.13em;font-weight:800}
+.conf-days{display:flex;gap:0;align-items:center;background:#0b174d;border:1px solid #3751aa;border-top:none;overflow-x:auto}
+.conf-days button{background:transparent;color:#b3c3ec;border:0;border-right:1px solid #3451a3;padding:16px 22px;cursor:pointer;white-space:nowrap;font-weight:900;letter-spacing:.06em}
+.conf-days button[aria-pressed=true]{background:#2349ce;color:#fff;box-shadow:inset 0 -4px #ffd16c}
+.conf-days span{margin-left:auto;padding:0 20px;color:#92a8e4;white-space:nowrap;font-size:11px;letter-spacing:.1em}
+.conf-grid-panel{display:grid;grid-template-columns:180px minmax(560px,1fr);border:1px solid #3557c3;border-top:0;background:repeating-linear-gradient(90deg,#0d1a63,#0d1a63 70px,#111d65 70px,#111d65 140px);overflow:auto}
+.conf-grid-label,.conf-ticks{height:58px;background:#091448;border-bottom:2px solid #5876dd}
+.conf-grid-label{padding:22px 14px;color:#c4d4fe;font-size:10px;letter-spacing:.12em;font-weight:900}
+.conf-ticks{position:relative;margin-right:22px}
+.conf-ticks span{position:absolute;top:20px;font-size:11px;font-weight:900;color:#fbd07a;white-space:nowrap;transform:translateX(-30%)}
+.conf-room-label{min-height:135px;background:#101f6e;border-right:3px solid #efbd64;border-bottom:1px solid #3452a5;padding:22px 15px;display:flex;flex-direction:column;gap:12px}
+.conf-room-label strong{font-size:14px}
+.conf-room-label small{color:#b2c3f4;font-size:10px;font-weight:800;letter-spacing:.1em}
+.conf-room-track{height:135px;position:relative;border-bottom:1px solid #2f4391;margin-right:22px}
+.conf-room-track>i{position:absolute;display:block;top:0;bottom:0;width:1px;background:#3d55ae5e}
+.conf-session-card{position:absolute;top:11px;bottom:11px;min-width:1px;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:flex-start;flex-direction:column;gap:6px;text-align:left;border:1px solid #738be9;border-radius:4px;padding:12px;color:#fff;background:#1935a5;box-shadow:0 5px 15px #0005}
+button.conf-session-card{cursor:pointer}
+.conf-session-card.selected{outline:3px solid #ffe6a7;outline-offset:1px;z-index:2}
+.conf-session-card.live{background:#116355;border-color:#55d4b3}
+.conf-session-card.delayed{background:#704617;border-color:#ebb75b}
+.conf-session-card.ended{opacity:.58}
+.conf-card-time{font-size:10px;font-weight:900;letter-spacing:.08em;color:#c8d4ff}
+.conf-session-card strong{font-size:clamp(10px,1.2vw,14px);line-height:1.15;overflow:hidden}
+.conf-card-speaker{font-size:10px;color:#c4d0fa;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:100%}
+.conf-status{font-size:9px;font-weight:900;letter-spacing:.12em;color:#c7d8ff}
+.conf-live{color:#8df5c5}.conf-delayed{color:#ffd086}.conf-ended{color:#b4bace}
+.conf-empty{display:block;padding:52px 20px;color:#8f9ccd;font-size:12px}
+.conf-bottom-bar{display:flex;justify-content:space-between;gap:20px;padding:16px 22px;background:#111d65;border:1px solid #3451a3;border-top:0;font-size:12px;color:#bdd1ff}
+.conf-bottom-bar span{font-weight:900;letter-spacing:.1em}
+.conf-bottom-bar strong{max-width:50%;overflow-wrap:anywhere}
+.conf-console{margin:24px 0;background:#0d1229;border:1px solid #344b91;border-radius:13px;padding:25px}
+.conf-console-head{display:flex;justify-content:space-between;gap:14px;flex-wrap:wrap;align-items:center;border-bottom:1px solid #2d4178;padding-bottom:16px}
+.conf-console-head small{font-size:11px;letter-spacing:.15em;color:#9cb6f5;font-weight:800}
+.conf-console-head h2{font-size:24px;margin:4px 0}
+.conf-armed{font-size:10px;color:#ffca80;font-weight:900;letter-spacing:.1em}
+.conf-banks{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:17px;margin-top:18px}
+.conf-bank{padding:20px;background:#151c39;border:1px solid #344879;border-radius:10px}
+.conf-bank h3{margin:0 0 15px;font-size:15px}
+.conf-bank h3 small{font-size:9px;display:block;color:#98acd7;letter-spacing:.08em;margin-top:7px}
+.conf-bank label{display:block;font-size:11px;font-weight:800;margin:9px 0}
+.conf-bank p,.conf-bank small{color:#a9b9dd;line-height:1.5}
+.conf-bank input,.conf-bank select{background:#0a1330;border:1px solid #5063a1;color:#fff;padding:10px;border-radius:5px;min-width:0;width:100%}
+.conf-bank button{background:#243e95;border:1px solid #5073df;color:white;padding:11px 13px;border-radius:5px;cursor:pointer;font-size:11px;font-weight:900;letter-spacing:.06em}
+.conf-bank button:disabled{opacity:.35;cursor:not-allowed}
+.conf-bank button[data-status=live],.conf-bank button[data-cue=GO]{background:#167055;border-color:#57d6aa}
+.conf-bank button[data-status=delayed],.conf-bank button[data-cue=HOLD]{background:#755016;border-color:#f5c36e}
+.conf-bank button[aria-current=true]{outline:2px solid white;outline-offset:2px}
+.conf-buttons{display:flex;gap:9px;flex-wrap:wrap;margin:15px 0}
+.conf-selected-title{font-size:18px}
+.conf-signals{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.conf-signal{display:flex!important;align-items:center;justify-content:space-between;gap:10px;background:#0c1531;padding:8px;border:1px solid #31467a;border-radius:5px}
+.conf-signal select{width:115px}
+.conf-token-row{display:flex;gap:9px}
+.conf-token-row input{flex:1}
+.conf-form-row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+.conf-form-row label{display:block}
+.conf-form-row input,.conf-form-row select{margin-top:6px}
+#conf-add-session>button{margin-top:12px}
+.conf-viewer-note{padding:24px;color:#bed0fb}
+.conf-viewer-note h2{color:white;font-size:20px}
+.conf-feedback{margin-top:10px;color:#ffd199;font-weight:800;min-height:22px}
+.conf-shell :is(button,input,select,a):focus-visible{outline:3px solid #ffe19a;outline-offset:3px}
+@media(max-width:900px){.conf-mast{flex-wrap:wrap}.conf-mast-metrics{width:100%;justify-content:space-between}.conf-banks{grid-template-columns:1fr}.conf-shell{padding:12px}.conf-grid-panel{grid-template-columns:130px minmax(650px,1fr)}.conf-mast{padding:18px}.conf-bottom-bar{display:block}.conf-bottom-bar strong{display:block;max-width:100%;margin-top:8px}}
+@media(prefers-reduced-motion:reduce){.conf-shell *, .conf-shell *:before,.conf-shell *:after{animation:none!important;transition:none!important}}
+.conf-tronix{grid-column:1/-1;display:flex!important;flex-wrap:wrap}.conf-tronix strong{margin-left:auto;font-size:11px;color:#b7d8fa}.conf-tronix small{width:100%;font-size:10px}
