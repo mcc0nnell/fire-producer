@@ -21,7 +21,7 @@ The first live vertical slice is football. The runtime is growing into a cartrid
 
 **DC27 producer:** `/?cartridge=conference&event=dc27&mode=operator`
 
-See [DC27 operations, security and local Tronix bridge](docs/DC27.md). The schedule is **demonstration data**, not DIG's final program. These routes are source-only until deployed.
+See [DC27 operations, security and local Tronix bridge](docs/DC27.md) and the [executable planning/rehearsal guide](docs/DC27_PLANNING.md). The schedule is **demonstration data**, not DIG's final program. These routes are source-only until deployed.
 
 ## What works in v0.9
 
