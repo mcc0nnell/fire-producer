@@ -282,3 +282,25 @@ button.conf-session-card{cursor:pointer}
 @media(max-width:900px){.conf-mast{flex-wrap:wrap}.conf-mast-metrics{width:100%;justify-content:space-between}.conf-banks{grid-template-columns:1fr}.conf-shell{padding:12px}.conf-grid-panel{grid-template-columns:130px minmax(650px,1fr)}.conf-mast{padding:18px}.conf-bottom-bar{display:block}.conf-bottom-bar strong{display:block;max-width:100%;margin-top:8px}}
 @media(prefers-reduced-motion:reduce){.conf-shell *, .conf-shell *:before,.conf-shell *:after{animation:none!important;transition:none!important}}
 .conf-tronix{grid-column:1/-1;display:flex!important;flex-wrap:wrap}.conf-tronix strong{margin-left:auto;font-size:11px;color:#b7d8fa}.conf-tronix small{width:100%;font-size:10px}
+
+/* SF26-derived planning and no-side-effect rehearsal console */
+.conf-planning{margin:24px 0;padding:24px;background:#0b183a;border:1px solid #3c63ac;border-radius:12px}
+.conf-planning-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+.conf-planning .conf-bank form>input{margin-bottom:10px}
+.conf-planning .conf-bank form>button{margin-top:13px}
+.conf-plan-verdict{border:1px solid #4c7aca;padding:10px 14px;border-radius:6px;color:#c9dfff;font-size:12px;font-weight:900}
+.conf-plan-verdict.blocked{border-color:#c28548;color:#ffca91}
+.conf-plan-verdict.ready{border-color:#3eaf85;color:#b8ffdb}
+.conf-plan-issues{max-height:280px;overflow:auto;padding-left:22px;color:#f4cba3;font-size:12px;line-height:1.7}
+.conf-plan-issues li{overflow-wrap:anywhere}
+.conf-cue-plan{padding-left:22px;display:flex;flex-direction:column;gap:14px}
+.conf-cue-plan li{font-size:13px}
+.conf-cue-plan li strong{display:inline-block;min-width:82px;color:#ffd998}
+.conf-cue-plan li small{display:block;font-size:10px;color:#a3b7e5;margin-top:5px}
+.conf-rehearsal{grid-column:1/-1}
+.conf-rehearsal select{max-width:340px}
+.conf-report{border-top:1px solid #324c91;padding-top:16px}
+.conf-report>strong{color:#c1f7df}
+.conf-report li{font-size:12px;line-height:1.7;margin-bottom:8px}
+.conf-stale{color:#ffd08a!important;font-weight:800}
+@media(max-width:900px){.conf-planning{padding:14px}.conf-planning-grid{grid-template-columns:1fr}.conf-rehearsal{grid-column:auto}}

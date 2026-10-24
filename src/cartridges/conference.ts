@@ -1,4 +1,5 @@
 import {foldCartridge, type CartridgeEvent, type EventCartridge} from './types'
+import {defaultProductionPlan, validateProductionPlan, type SessionProductionPlan} from '../conference/planning'
 
 export type SessionStatus = 'scheduled' | 'ready' | 'live' | 'delayed' | 'ended'
 export type SignalStatus = 'unknown' | 'ok' | 'warning' | 'fault'
@@ -11,7 +12,7 @@ export type ConferenceSession = {
 export type ConferenceSignal = {roomId:string; signal:SignalId; status:SignalStatus; note:string}
 export type ConferenceState = {
   slug:string; revision:number; lastSeq:number; eventName:string; timeZone:string
-  rooms:ConferenceRoom[]; sessions:ConferenceSession[]; signals:ConferenceSignal[]
+  rooms:ConferenceRoom[]; sessions:ConferenceSession[]; signals:ConferenceSignal[]; plans:SessionProductionPlan[]
   cue:{roomId:string; label:string; seq:number}|null; message:string
 }
 export type ConferenceCommand =
@@ -20,6 +21,7 @@ export type ConferenceCommand =
   | {type:'SET_SIGNAL'; roomId:string; signal:SignalId; status:SignalStatus; note:string; idempotencyKey:string}
   | {type:'TAKE_CUE'; roomId:string; label:string; idempotencyKey:string}
   | {type:'SET_MESSAGE'; text:string; idempotencyKey:string}
+  | {type:'SET_SESSION_PLAN'; plan:SessionProductionPlan; idempotencyKey:string}
 
 const statuses:SessionStatus[]=['scheduled','ready','live','delayed','ended']
 const signals:SignalId[]=['audio','video','captions','asl','recording','network','tronix']
@@ -41,7 +43,7 @@ export function initialConferenceState(slug='dc27'):ConferenceState {
     {id:'demo-day2',roomId:'main',date:'2027-04-29',start:'09:00',end:'10:00',title:'DEMO — Day two program',speaker:'Sample rundown',status:'scheduled'},
     {id:'demo-day3',roomId:'main',date:'2027-04-30',start:'09:00',end:'10:00',title:'DEMO — Closing day',speaker:'Sample rundown',status:'scheduled'},
   ]
-  return {slug,revision:0,lastSeq:0,eventName:'DIG NTC DC27',timeZone:'America/New_York',rooms,sessions,signals:[],cue:null,message:''}
+  return {slug,revision:0,lastSeq:0,eventName:'DIG NTC DC27',timeZone:'America/New_York',rooms,sessions,plans:sessions.map(defaultProductionPlan),signals:[],cue:null,message:''}
 }
 
 export function reduceConference(state:ConferenceState,event:CartridgeEvent<ConferenceCommand>):ConferenceState {
@@ -49,9 +51,11 @@ export function reduceConference(state:ConferenceState,event:CartridgeEvent<Conf
   switch(event.type){
     case 'UPSERT_SESSION':{
       const session={...event.session}
-      return {...next,sessions:state.sessions.some(s=>s.id===session.id)
+      const existing=state.sessions.some(s=>s.id===session.id)
+      return {...next,sessions:existing
         ? state.sessions.map(s=>s.id===session.id?session:s)
-        : [...state.sessions,session]}
+        : [...state.sessions,session],
+        plans:existing?state.plans:[...state.plans,defaultProductionPlan(session)]}
     }
     case 'SET_SESSION_STATUS':
       return {...next,sessions:state.sessions.map(s=>s.id===event.sessionId?{...s,status:event.status}:s)}
@@ -61,6 +65,9 @@ export function reduceConference(state:ConferenceState,event:CartridgeEvent<Conf
     }
     case 'TAKE_CUE':return {...next,cue:{roomId:event.roomId,label:event.label,seq:event.seq}}
     case 'SET_MESSAGE':return {...next,message:event.text}
+    case 'SET_SESSION_PLAN':return {...next,plans:state.plans.some(p=>p.sessionId===event.plan.sessionId)
+      ? state.plans.map(p=>p.sessionId===event.plan.sessionId?event.plan:p)
+      : [...state.plans,event.plan]}
   }
 }
 
@@ -100,6 +107,13 @@ export const conferenceCartridge:EventCartridge<ConferenceState,ConferenceComman
           ? {ok:true} : fail('Invalid cue')
       case 'SET_MESSAGE':
         return validText(command.text,240) ? {ok:true} : fail('Invalid message')
+      case 'SET_SESSION_PLAN':{
+        const issues=validateProductionPlan(command.plan,state.sessions.find(s=>s.id===command.plan?.sessionId))
+        if(issues.length)return fail(issues[0].detail)
+        const session=state.sessions.find(s=>s.id===command.plan.sessionId)!
+        if(session.status==='live')return fail('Cannot edit a live session plan')
+        return {ok:true}
+      }
       default:return fail('Unknown conference command')
     }
   },

@@ -1,5 +1,7 @@
 import type {ConferenceState, ConferenceSession, ConferenceRoom, SessionStatus, SignalId, SignalStatus} from './cartridges/conference'
 import {announceStatus} from './a11y'
+import {plannerMarkup} from './conference/planner-ui'
+import {defaultProductionPlan,assessReadiness,rehearse,type RehearsalScenario,type RehearsalReport,type RouteKey,ROUTES} from './conference/planning'
 
 const DAYS=['2027-04-28','2027-04-29','2027-04-30']
 const SIGNALS:SignalId[]=['audio','video','captions','asl','recording','network','tronix']
@@ -24,6 +26,7 @@ export function startConferenceProduction(root:HTMLDivElement,slug='dc27',mode:'
   let lastError=''
   let socket:WebSocket|null=null
   let reconnectDelay=1200
+  let rehearsalReport:RehearsalReport|null=null
 
   function sessionCard(s:ConferenceSession) {
     const left=Math.max(0,(minutes(s.start)-480)/660*100)
@@ -132,7 +135,7 @@ export function startConferenceProduction(root:HTMLDivElement,slug='dc27',mode:'
       </section>
       ${grid(state)}
       <div class="conf-bottom-bar"><span>LIVE CONFERENCE OPERATIONS · ${esc(state.eventName)}</span><strong>${state.message?esc(state.message):'Choose a session to see its current production status.'}</strong></div>
-      ${mode==='operator'?operatorConsole(state):`<section class="conf-viewer-note"><h2>Today's sessions</h2><p>Session statuses are published by the Fire Producer conference control plane. This board does not contain actual video, caption, or interpreter feeds.</p></section>`}
+      ${mode==='operator'?operatorConsole(state)+plannerMarkup(state,selectedId,rehearsalReport?.sessionId===selectedId?rehearsalReport:null):`<section class="conf-viewer-note"><h2>Today's sessions</h2><p>Session statuses are published by the Fire Producer conference control plane. This board does not contain actual video, caption, or interpreter feeds.</p></section>`}
       <div class="conf-feedback" role="status" aria-live="polite">${lastError?esc(lastError):''}</div>
     </main>`
     bind()
@@ -153,15 +156,27 @@ export function startConferenceProduction(root:HTMLDivElement,slug='dc27',mode:'
     finally{busy=false;render()}
   }
   function input(id:string){return (document.getElementById(id) as HTMLInputElement|null)?.value||''}
+  function draftPlan(){
+    const session=state?.sessions.find(s=>s.id===selectedId)
+    if(!session)return null
+    const base=state?.plans.find(p=>p.sessionId===selectedId)||defaultProductionPlan(session)
+    const routes={...base.routes}
+    for(const key of ROUTES)routes[key as RouteKey]=input(`plan-${key}`).trim()
+    return {...base,operator:input('plan-operator').trim(),fallbackMessage:input('plan-fallback').trim(),routes}
+  }
   function bind(){
     root.querySelectorAll<HTMLButtonElement>('[data-day]').forEach(el=>el.onclick=()=>{selectedDay=el.dataset.day!;render()})
-    root.querySelectorAll<HTMLButtonElement>('[data-select]').forEach(el=>el.onclick=()=>{selectedId=el.dataset.select!;render()})
+    root.querySelectorAll<HTMLButtonElement>('[data-select]').forEach(el=>el.onclick=()=>{selectedId=el.dataset.select!;rehearsalReport=null;render()})
     root.querySelector<HTMLButtonElement>('[data-token]')?.addEventListener('click',()=>{
       token=input('conf-token').trim();lastError=token?'Token stored in this tab until reload; it will be verified on command.':'Enter a token.'
       render()
     })
     root.querySelectorAll<HTMLButtonElement>('[data-status]').forEach(el=>el.onclick=()=>{
-      if(el.dataset.status==='live'&&!confirm('Mark this session LIVE? This changes the published board but does not switch equipment.'))return
+      if(el.dataset.status==='live'){
+        const issues=state?assessReadiness(state,selectedId).issues:[]
+        const question=issues.length?`OVERRIDE ${issues.length} unready planning/readiness gates? This only changes the published session status; no hardware is switched.`:'Mark this session LIVE on the board? This does not switch equipment.'
+        if(!confirm(question))return
+      }
       void send({type:'SET_SESSION_STATUS',sessionId:selectedId,status:el.dataset.status})
     })
     root.querySelectorAll<HTMLButtonElement>('[data-cue]').forEach(el=>el.onclick=()=>{
@@ -171,6 +186,44 @@ export function startConferenceProduction(root:HTMLDivElement,slug='dc27',mode:'
     root.querySelectorAll('[data-signal]').forEach(node=>{
       const el=node as unknown as HTMLSelectElement
       el.onchange=()=>{void send({type:'SET_SIGNAL',roomId:el.dataset.room,signal:el.dataset.signal,status:el.value,note:'operator reported'})}
+    })
+    root.querySelector<HTMLFormElement>('#conf-plan-form')?.addEventListener('submit',e=>{
+      e.preventDefault()
+      const plan=draftPlan()
+      if(plan)void send({type:'SET_SESSION_PLAN',plan})
+    })
+    root.querySelector<HTMLFormElement>('#conf-add-cue')?.addEventListener('submit',e=>{
+      e.preventDefault()
+      const plan=draftPlan()
+      if(!plan)return
+      const offsetSec=Number(input('conf-cue-time'))
+      if(!Number.isInteger(offsetSec))return
+      const action=input('conf-cue-action') as 'TAKE_GRAPHIC'|'PLAY_MEDIA'
+      const label=input('conf-cue-label').trim()
+      const cues=[...plan.cues,{id:`extra-${crypto.randomUUID().slice(0,12)}`,label,offsetSec,action}]
+        .sort((a,b)=>a.offsetSec-b.offsetSec)
+      void send({type:'SET_SESSION_PLAN',plan:{...plan,cues}})
+    })
+    root.querySelectorAll<HTMLButtonElement>('[data-remove-cue]').forEach(button=>button.onclick=()=>{
+      const plan=draftPlan()
+      if(!plan||!confirm('Remove this cue from the saved production plan?'))return
+      const cues=plan.cues.filter(c=>c.id!==button.dataset.removeCue)
+      void send({type:'SET_SESSION_PLAN',plan:{...plan,cues}})
+    })
+    root.querySelector<HTMLButtonElement>('[data-run-rehearsal]')?.addEventListener('click',()=>{
+      if(!state)return
+      const scenario=input('plan-scenario') as RehearsalScenario
+      rehearsalReport=rehearse(state,selectedId,scenario)
+      render()
+    })
+    root.querySelector<HTMLButtonElement>('[data-export-rehearsal]')?.addEventListener('click',()=>{
+      if(!rehearsalReport||rehearsalReport.sessionId!==selectedId)return
+      const blob=new Blob([JSON.stringify(rehearsalReport,null,2)+'\n'],{type:'application/json'})
+      const url=URL.createObjectURL(blob)
+      const link=document.createElement('a')
+      link.href=url;link.download=`dc27-${selectedId}-${rehearsalReport.scenario}-rehearsal.json`
+      document.body.appendChild(link);link.click();link.remove()
+      window.setTimeout(()=>URL.revokeObjectURL(url),500)
     })
     root.querySelector<HTMLFormElement>('#conf-add-session')?.addEventListener('submit',e=>{
       e.preventDefault()
